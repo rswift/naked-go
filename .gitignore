@@ -25,5 +25,3 @@ Icon
 # Local binary
 #
 main
-go.mod
-go.sum
