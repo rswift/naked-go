@@ -16,6 +16,9 @@ go build main.go
 ### Dockerfile
 The [`Dockerfile`](./Dockerfile "Dockerfile") is deliberately as short and simple as possible. Nuff said?
 
+### buildspec.yml
+The [buildspec.yml](./buildspec.yml "buildspec.yml") file can be used in an [AWS CodeBuild project](https://docs.aws.amazon.com/codebuild/latest/userguide/create-project-console.html#create-project-console-buildspec "AWS CodeBuild docs") to facilitate a devops approach.
+
 # Local Explorification 🧑‍💻
 All this was done on macOS...
 
@@ -26,8 +29,11 @@ export REGION=eu-west-2
 export ECR_REPO=go
 export FUNCTION_NAME=demo
 export FUNCTION_OUTPUT=/tmp/logs-command
+export SLEEP=5
 aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com
 ```
+
+The `SLEEP` is used to force a delay into the process, on occasion the log stream isn't instantly available, so a rather hacky hack, but it works (at least most of the time) 🙃
 
 #### 🤞 build
 Assumes docker and [dive](https://github.com/wagoodman/dive "dive") are installed.
@@ -42,14 +48,13 @@ dive ${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/${ECR_REPO}:${VERSION}
 aws lambda update-function-code --function-name ${FUNCTION_NAME} --image-uri ${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/${ECR_REPO}:${VERSION} --no-cli-pager && aws lambda wait function-updated-v2 --function-name ${FUNCTION_NAME} && echo "Function ${FUNCTION_NAME} updated 👌" || echo "Failed to update ${FUNCTION_NAME} 😱"
 ```
 
+A [multi-stage Dockerfile](./Dockerfile.builder "Dockerfile.builder") can build the same binary, the `CGO_ENABLED` variable needs to be set with (i.e. `go env -w CGO_ENABLED=0`).
+
 #### 🏃 run
 Assumes [jq](https://stedolan.github.io/jq/ "jq") is installed.
 ```bash
-aws lambda invoke --function-name ${FUNCTION_NAME} --payload '{"wibble":"wobble","plop":["plip"],"true":false,"emoji":"🤓"}' --cli-binary-format raw-in-base64-out --no-cli-pager ${FUNCTION_OUTPUT} && eval $(sleep 3; cat ${FUNCTION_OUTPUT} | cut -d\" -f2) | jq '.events[].message' -r | sed -e '/^$/d'; rm ${FUNCTION_OUTPUT}
+aws lambda invoke --function-name ${FUNCTION_NAME} --payload '{"wibble":"wobble","plop":["plip"],"true":false,"emoji":"🤓"}' --cli-binary-format raw-in-base64-out --no-cli-pager ${FUNCTION_OUTPUT} && eval $(sleep ${SLEEP}; cat ${FUNCTION_OUTPUT} | cut -d\" -f2) | jq '.events[].message' -r | sed -e '/^$/d'; rm ${FUNCTION_OUTPUT}
 ```
-
-# ToDo
-- create a multi-stage builder Dockerfile
 
 # Possibly Handy Links
 - https://docs.aws.amazon.com/lambda/latest/dg/lambda-golang.html
@@ -58,3 +63,4 @@ aws lambda invoke --function-name ${FUNCTION_NAME} --payload '{"wibble":"wobble"
 - https://docs.aws.amazon.com/lambda/latest/dg/go-image.html
 - https://go.dev/doc/install/source#environment
 - https://go.dev/learn/
+- https://docs.docker.com/develop/develop-images/multistage-build/#name-your-build-stages
