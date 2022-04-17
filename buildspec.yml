@@ -1,0 +1,26 @@
+version: 0.2
+
+env:
+  variables:
+    ECR_REPO: "go"
+
+phases:
+  install:
+    commands:
+      - nohup /usr/local/bin/dockerd --host=unix:///var/run/docker.sock --host=tcp://127.0.0.1:2375 --storage-driver=overlay2 &
+      - timeout 15 sh -c "until docker info; do echo .; sleep 1; done"
+  pre_build:
+    commands:
+      - go mod download
+      - go env -w GOPROXY=direct
+      - go env -w CGO_ENABLED=0
+      - export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - $(aws ecr get-login --no-include-email --region ${AWS_REGION})
+  build:
+    commands:
+      - echo "Building version ${CODEBUILD_BUILD_NUMBER} for account ${AWS_ACCOUNT_ID}"
+      - go build -o main main.go
+      - docker build --tag ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${CODEBUILD_BUILD_NUMBER} .
+  post_build:
+    commands:
+      - docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${CODEBUILD_BUILD_NUMBER}
