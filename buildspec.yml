@@ -28,4 +28,4 @@ phases:
   post_build:
     commands:
       - docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${CODEBUILD_BUILD_NUMBER}
-      - echo "Lambda can now be updated from ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${VERSION} with something like" && echo "" && echo "aws lambda update-function-code --function-name ${FUNCTION_NAME} --image-uri ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${VERSION} --no-cli-pager"
+      - echo "Lambda can now be updated from ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${CODEBUILD_BUILD_NUMBER} with something like" && echo "" && echo "aws lambda update-function-code --function-name ${FUNCTION_NAME} --image-uri ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${CODEBUILD_BUILD_NUMBER} --no-cli-pager"
