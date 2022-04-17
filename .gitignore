@@ -1,0 +1,29 @@
+#
+# macOS: https://github.com/github/gitignore/blob/master/Global/macOS.gitignore
+#
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+# Thumbnails
+._*
+
+#
+# VSCode: https://github.com/github/gitignore/blob/master/Global/VisualStudioCode.gitignore
+#
+.vscode
+*.code-workspace
+
+# Local History for Visual Studio Code
+.history/
+
+#
+# Local binary
+#
+main
+go.mod
+go.sum
