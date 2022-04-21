@@ -23,7 +23,7 @@ phases:
     on-failure: ABORT
     commands:
       - echo "Building version ${CODEBUILD_BUILD_NUMBER} for account ${AWS_ACCOUNT_ID}"
-      - go build -o main main.go
+      - go build -ldflags="-w -s" -o main main.go
       - docker build --tag ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${CODEBUILD_BUILD_NUMBER} .
   post_build:
     commands:

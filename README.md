@@ -10,7 +10,7 @@ Rather trivial Go [source code](./main.go "main.go") that renders some log messa
 go env -w GOOS=linux
 go env -w GOARCH=amd64 
 go mod download
-go build main.go
+go build -ldflags="-w -s" main.go
 ```
 
 ### Dockerfile
@@ -36,9 +36,9 @@ aws ecr get-login-password --region ${REGION} | docker login --username AWS --pa
 The `SLEEP` is used to force a delay into the process, on occasion the log stream isn't instantly available, so a rather hacky hack, but it works (at least most of the time) 🙃
 
 #### 🤞 build
-Assumes docker and [dive](https://github.com/wagoodman/dive "dive") are installed.
+Assumes docker and [dive](https://github.com/wagoodman/dive "dive") are installed. The `-ldflags="-w -s"` [linker](https://pkg.go.dev/cmd/link "linker") option removes the symbol table, debug information (`-s`) and the DWARF symbol table (`-w`) resulting in an approximate 30% reduction in file size for this binary, the image pushed to ECR is roughly half the size ([hat tip](https://chemidy.medium.com/create-the-smallest-and-secured-golang-docker-image-based-on-scratch-4752223b7324 "medium.com article")). 
 ```bash
-GOOS=linux GOARCH=amd64 go build -o main main.go && echo -n "Build success, provide an image tag version: " && read VERSION || echo "Build failed! 🧨"
+GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o main main.go && echo -n "Build success, provide an image tag version: " && read VERSION || echo "Build failed! 🧨"
 
 docker build --tag ${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/${ECR_REPO}:${VERSION} .
 docker push ${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/${ECR_REPO}:${VERSION}
@@ -64,3 +64,4 @@ aws lambda invoke --function-name ${FUNCTION_NAME} --payload '{"wibble":"wobble"
 - https://go.dev/doc/install/source#environment
 - https://go.dev/learn/
 - https://docs.docker.com/develop/develop-images/multistage-build/#name-your-build-stages
+- https://chemidy.medium.com/create-the-smallest-and-secured-golang-docker-image-based-on-scratch-4752223b7324
